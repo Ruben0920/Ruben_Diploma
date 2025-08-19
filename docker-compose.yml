@@ -1,0 +1,112 @@
+services:
+  audio_processing:
+    build:
+      context: ./audio_processing
+    volumes:
+      - ./input/videos:/app/input:ro
+      - ./output:/app/output
+    command: ["python", "audio_processing.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MAX_WORKERS=2
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  face_recognition:
+    build:
+      context: ./face_recognition
+    volumes:
+      - ./input/videos:/app/input:ro
+      - ./output:/app/output
+    command: ["python", "face_recognition.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MAX_WORKERS=2
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '1.5'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mapping_face_and_audio:
+    build:
+      context: ./mapping_face_and_audio
+    volumes:
+      - ./input/videos:/app/input:ro
+      - ./output:/app/output
+    command: ["python", "combine_faces_and_speakers.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MAX_WORKERS=2
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  polarization_analysis:
+    build:
+      context: ./polarization_analysis
+    volumes:
+      - ./input/videos:/app/input:ro
+      - ./output:/app/output
+    command: ["python", "enhanced_polarization_analysis.py"]
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MAX_WORKERS=2
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./output

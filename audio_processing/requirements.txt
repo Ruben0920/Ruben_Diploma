@@ -1,0 +1,6 @@
+pydub
+openai-whisper
+git+https://github.com/pyannote/pyannote-audio.git
+torch
+torchvision
+torchaudio
