@@ -64,6 +64,12 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
+    """
+    Load and cache debate data using DataLoader.
+    
+    Returns:
+        DataLoader: Initialized data loader with loaded debate data
+    """
     """Load and cache the analysis data"""
     try:
         data_loader = DataLoader()
@@ -73,12 +79,30 @@ def load_data():
         return None
 
 def format_time(seconds):
+    """
+    Format seconds into MM:SS format.
+    
+    Args:
+        seconds: Time in seconds
+        
+    Returns:
+        str: Formatted time string
+    """
     """Format seconds into MM:SS format"""
     minutes = int(seconds // 60)
     seconds = int(seconds % 60)
     return f"{minutes:02d}:{seconds:02d}"
 
 def get_sentiment_color(sentiment_score):
+    """
+    Get color for sentiment visualization based on score.
+    
+    Args:
+        sentiment_score: Sentiment score between -1 and 1
+        
+    Returns:
+        str: Color string for visualization
+    """
     """Get color based on sentiment score"""
     if sentiment_score > 0.3:
         return "#2ecc71"
@@ -88,6 +112,15 @@ def get_sentiment_color(sentiment_score):
         return "#f39c12"
 
 def get_speaker_color(speaker_id):
+    """
+    Get consistent color for a speaker across visualizations.
+    
+    Args:
+        speaker_id: Speaker identifier
+        
+    Returns:
+        str: Color string for the speaker
+    """
     """Get consistent color for each speaker"""
     colors = {
         'SPEAKER_00': '#3498db',
@@ -97,6 +130,16 @@ def get_speaker_color(speaker_id):
     return colors.get(speaker_id, '#95a5a6')
 
 def create_sentiment_timeline(data_loader, speaker_id):
+    """
+    Create sentiment timeline visualization for a speaker.
+    
+    Args:
+        data_loader: DataLoader instance with loaded data
+        speaker_id: Speaker identifier
+        
+    Returns:
+        plotly.graph_objects.Figure: Sentiment timeline chart
+    """
     """Create interactive sentiment timeline for a speaker"""
     segments_df = data_loader.get_speaker_segments(speaker_id)
     
@@ -246,6 +289,10 @@ def create_sentiment_heatmap(data_loader):
     return fig
 
 def main():
+    """
+    Main function for the Streamlit dashboard application.
+    Sets up the interface and renders different analysis views.
+    """
     st.markdown('<h1 class="main-header">Interactive Multi-Modal Analysis Dashboard</h1>', unsafe_allow_html=True)
     st.markdown("### Analyzing Political Debate Content: Sentiment, Emotion, and Topic Analysis")
     
@@ -272,6 +319,12 @@ def main():
         render_overall_analysis(data_loader)
 
 def render_transcript_explorer(data_loader):
+    """
+    Render the transcript explorer interface.
+    
+    Args:
+        data_loader: DataLoader instance with loaded data
+    """
     """Render Section 1: Interactive Transcript Explorer"""
     st.markdown('<h2 class="section-header">Interactive Transcript Explorer</h2>', unsafe_allow_html=True)
     
@@ -325,6 +378,12 @@ def render_transcript_explorer(data_loader):
         """, unsafe_allow_html=True)
 
 def render_speaker_profile(data_loader):
+    """
+    Render speaker profile analysis interface.
+    
+    Args:
+        data_loader: DataLoader instance with loaded data
+    """
     """Render Section 2: Speaker Profile Deep Dive"""
     st.markdown('<h2 class="section-header">Speaker Profile Deep Dive</h2>', unsafe_allow_html=True)
     
@@ -368,6 +427,12 @@ def render_speaker_profile(data_loader):
                     st.metric("Total Speaking Time", format_time(total_time))
 
 def render_topic_faceoff(data_loader):
+    """
+    Render topic-based comparison interface.
+    
+    Args:
+        data_loader: DataLoader instance with loaded data
+    """
     """Render Section 3: Topic Polarization Face-Off"""
     st.markdown('<h2 class="section-header">Topic Polarization Face-Off</h2>', unsafe_allow_html=True)
     
@@ -414,6 +479,12 @@ def render_topic_faceoff(data_loader):
                 """, unsafe_allow_html=True)
 
 def render_overall_analysis(data_loader):
+    """
+    Render overall debate analysis interface.
+    
+    Args:
+        data_loader: DataLoader instance with loaded data
+    """
     """Render Section 4: Overall Debate Analysis"""
     st.markdown('<h2 class="section-header">Overall Debate Analysis</h2>', unsafe_allow_html=True)
     

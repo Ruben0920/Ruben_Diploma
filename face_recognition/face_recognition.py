@@ -37,10 +37,22 @@ def cosine_similarity(a,b):
     return float(np.dot(a/na,b/nb).clip(-1,1))
 
 def sample_frames(cap, start, end, fps_video):
-    frames=[]; t=start
+    """
+    Sample frames from a video segment at regular intervals.
+    
+    Args:
+        cap: OpenCV video capture object
+        start: Start time in seconds
+        end: End time in seconds
+        fps_video: Video frame rate (unused in current implementation)
+        
+    Returns:
+        list: List of sampled video frames
+    """
+    frames = []
+    t = start
     cap.set(cv2.CAP_PROP_POS_MSEC, start * 1000)
     current_video_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
-
 
     while t <= end:
         cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
@@ -48,13 +60,22 @@ def sample_frames(cap, start, end, fps_video):
         if not ret:
             break
         frames.append(frm)
-        t += 1.0 / FRAMES_PER_SECOND 
+        t += 1.0 / FRAMES_PER_SECOND
         if t > end + (1.0 / FRAMES_PER_SECOND):
-             break
+            break
     return frames
 
 def extract_embs(frm):
-    embs=[]
+    """
+    Extract face embeddings from a single frame.
+    
+    Args:
+        frm: Video frame
+        
+    Returns:
+        list: List of face embeddings found in the frame
+    """
+    embs = []
     try:
         regs = DeepFace.extract_faces(img_path=frm,
               detector_backend=BACKEND,
@@ -146,15 +167,12 @@ def main():
                 # print(f"    No face embeddings found in segment {seg_idx + 1}")
 
 
-        # After processing all segments for the current speaker
         current_speaker_output = {
             "speaker_id": speaker_id,
-            # "segments": spk_info["segments"], # Keep original segments if needed, but remove face_embedding from them
-            "voice_embedding_avg": spk_info.get("average_embedding") # Assuming the input JSON has this
+            "voice_embedding_avg": spk_info.get("average_embedding")
         }
 
         if all_speaker_face_embeddings:
-            # Calculate the average of all face embeddings for this speaker
             average_face_embedding_for_speaker = np.mean(np.stack(all_speaker_face_embeddings), axis=0)
             current_speaker_output["average_face_embedding"] = average_face_embedding_for_speaker.tolist()
             print(f"  Average face embedding calculated for {speaker_id} from {len(all_speaker_face_embeddings)} detected faces.")
@@ -166,7 +184,6 @@ def main():
 
     cap.release()
     
-    # Save the new structure
     with open(OUT_JSON, "w") as o:
         json.dump(output_speakers, o, indent=2)
     print(f"'{OUT_JSON}' written with average face embeddings per speaker.")

@@ -13,11 +13,16 @@ MIN_SEGMENT_DURATION = 5.0
 
 def save_speakers_to_file(diarization, audio_path, embedding_inference, sample_rate, output_file):
     """
-    Save speaker segments and embeddings + one average embedding per speaker to a JSON file.
-    - Loads the full audio once and converts to mono + 16 kHz.
-    - Extracts exactly MIN_SEGMENT_DURATION seconds per turn,
-      zero-pads shorter ones, runs a whole-segment embedding.
-    - Groups all segment info under each speaker and computes their average embedding.
+    Save speaker segments and embeddings plus one average embedding per speaker to a JSON file.
+    Loads the full audio once and converts to mono 16 kHz, extracts exactly MIN_SEGMENT_DURATION
+    seconds per turn with zero-padding for shorter segments, and computes average embeddings.
+    
+    Args:
+        diarization: Speaker diarization results from pyannote
+        audio_path: Path to the audio file
+        embedding_inference: Pyannote embedding inference object
+        sample_rate: Audio sample rate (unused in current implementation)
+        output_file: Output JSON file path
     """
     waveform, orig_sr = torchaudio.load(audio_path, normalize=True)
     if waveform.shape[0] > 1:
@@ -31,7 +36,7 @@ def save_speakers_to_file(diarization, audio_path, embedding_inference, sample_r
     total_frames = waveform.shape[1]
     frames_per_seg = int(MIN_SEGMENT_DURATION * TARGET_SR)
 
-    speakers = {}  
+    speakers = {}
 
     for segment, _, speaker in diarization.itertracks(yield_label=True):
         start_frame = int(segment.start * TARGET_SR)
@@ -84,7 +89,13 @@ def save_speakers_to_file(diarization, audio_path, embedding_inference, sample_r
 
 
 def diarize_audio(audio_file, output_file):
-    # Get Hugging Face token from environment variable
+    """
+    Perform speaker diarization on an audio file and extract voice embeddings.
+    
+    Args:
+        audio_file: Path to input audio file
+        output_file: Path to output JSON file for speaker data
+    """
     hf_token = os.getenv('HUGGING_FACE_TOKEN')
     if not hf_token:
         raise ValueError("HUGGING_FACE_TOKEN environment variable not set")
@@ -112,6 +123,16 @@ def diarize_audio(audio_file, output_file):
 
 
 def extract_audio(video_path, audio_output_path):
+    """
+    Extract mono audio from a video file and save as MP3.
+    
+    Args:
+        video_path: Path to input video file
+        audio_output_path: Path to output audio file
+        
+    Returns:
+        str: Path to the extracted audio file
+    """
     os.makedirs(os.path.dirname(audio_output_path), exist_ok=True)
     audio = AudioSegment.from_file(video_path)
     audio = audio.set_channels(1)
@@ -120,35 +141,49 @@ def extract_audio(video_path, audio_output_path):
 
 
 def transcribe_audio(audio_path, model_name="tiny"):
+    """
+    Transcribe audio using OpenAI Whisper with word-level timestamps.
+    
+    Args:
+        audio_path: Path to audio file
+        model_name: Whisper model size (default: 'tiny')
+        
+    Returns:
+        dict: Transcription result with segments and word timestamps
+    """
     model = load_model(model_name)
     result = model.transcribe(audio_path, word_timestamps=True)
     return result
 
 
 def save_transcription_to_file(transcription_result, output_path):
+    """
+    Save transcription results to a JSON file.
+    
+    Args:
+        transcription_result: Whisper transcription output
+        output_path: Path to output JSON file
+    """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as file:
         json.dump(transcription_result, file, indent=4)
 
 
 def main():
-    # Get video filename from environment variable
+    """
+    Main function to process a video file through the audio analysis pipeline.
+    Extracts audio, performs transcription, speaker diarization, and voice embedding extraction.
+    """
     video_filename = os.getenv('VIDEO_FILENAME')
     if not video_filename:
         print("Error: VIDEO_FILENAME environment variable not set!")
         print("Using default video file...")
         video_filename = "test_video_1.mp4"
     
-    # Get output base directory from environment variable
     output_base_dir = os.getenv('OUTPUT_BASE_DIR', '/app/output')
-    
-    # Extract video name without extension for output directory
     video_name = os.path.splitext(video_filename)[0]
-    
-    # Set paths based on dynamic input
     video_path = f"/app/input/{video_filename}"
     
-    # Create output paths in the video-specific speaker_diarization subdirectory
     output_dir = f"/app/output/{video_name}/speaker_diarization"
     os.makedirs(output_dir, exist_ok=True)
     

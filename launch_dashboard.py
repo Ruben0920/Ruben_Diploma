@@ -12,7 +12,12 @@ import webbrowser
 from pathlib import Path
 
 def check_dependencies():
-    """Check if required dependencies are installed"""
+    """
+    Check if required dependencies are installed for the dashboard.
+    
+    Returns:
+        bool: True if all dependencies are available, False otherwise
+    """
     try:
         import streamlit
         import plotly
@@ -24,7 +29,12 @@ def check_dependencies():
         return False
 
 def test_data_loading():
-    """Test if the dashboard can load data successfully"""
+    """
+    Test if the dashboard can load data successfully from output directory.
+    
+    Returns:
+        bool: True if data loads successfully, False otherwise
+    """
     try:
         sys.path.append(str(Path(__file__).parent / "dashboard"))
         from data_loader import DataLoader
@@ -44,7 +54,12 @@ def test_data_loading():
         return False
 
 def launch_dashboard():
-    """Launch the Streamlit dashboard with error handling"""
+    """
+    Launch the Streamlit dashboard with error handling and browser opening.
+    
+    Returns:
+        bool: True if dashboard launches successfully, False otherwise
+    """
     dashboard_dir = Path(__file__).parent / "dashboard"
     
     if not dashboard_dir.exists():
@@ -106,7 +121,10 @@ def launch_dashboard():
         return False
 
 def main():
-    """Main entry point"""
+    """
+    Main entry point for the dashboard launcher.
+    Checks dependencies, tests data loading, and launches the dashboard.
+    """
     print("Interactive Multi-Modal Analysis Dashboard Launcher")
     print("=" * 60)
     

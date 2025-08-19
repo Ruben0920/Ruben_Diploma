@@ -8,15 +8,22 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from transformers import pipeline
 import os
 
-# Gender mapping for the specific dataset
 GENDER_MAP = {
-    'SPEAKER_00': 'male',   # Donald Trump
-    'SPEAKER_01': 'female', # Hillary Clinton
-    'SPEAKER_02': 'male'    # Lester Holt
+    'SPEAKER_00': 'male',
+    'SPEAKER_01': 'female',
+    'SPEAKER_02': 'male'
 }
 
 class EnhancedPolarizationAnalyzer:
+    """
+    Advanced analyzer for political discourse polarization using multimodal sentiment analysis,
+    emotion detection, and topic classification.
+    """
+    
     def __init__(self):
+        """
+        Initialize the analyzer with sentiment, emotion, and topic classification models.
+        """
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
         try:
             self.emotion_classifier = pipeline("text-classification", 
@@ -32,7 +39,15 @@ class EnhancedPolarizationAnalyzer:
             print("Warning: Zero-shot classifier not available. Will use fallback topic classification.")
     
     def detect_emotion(self, text):
-        """Detect emotion in text using the emotion classifier."""
+        """
+        Detect emotion in text using the emotion classifier.
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            dict: Emotion label and confidence score
+        """
         if self.emotion_classifier and text:
             try:
                 result = self.emotion_classifier(text[:512])[0]  # Limit text length

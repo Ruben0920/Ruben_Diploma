@@ -58,14 +58,22 @@ class ParallelPipelineOrchestrator:
         self.output_dir = self.base_dir / 'output'
         
     def _signal_handler(self, signum, frame):
-        """Handle shutdown signals gracefully"""
+        """
+        Handle shutdown signals gracefully.
+        
+        Args:
+            signum: Signal number
+            frame: Current stack frame
+        """
         print(f"Received signal {signum}. Shutting down gracefully...")
         self.shutdown_event.set()
         self._cleanup_all_containers()
         sys.exit(0)
     
     def _cleanup_all_containers(self):
-        """Clean up all active containers"""
+        """
+        Clean up all active containers before shutdown.
+        """
         print("Cleaning up containers...")
         
         for container_id, container_info in self.active_containers.items():
@@ -81,7 +89,12 @@ class ParallelPipelineOrchestrator:
         self.active_containers.clear()
     
     def _check_system_resources(self) -> bool:
-        """Check if system has enough resources to start processing"""
+        """
+        Check if system has enough resources to start processing.
+        
+        Returns:
+            bool: True if resources are adequate, False otherwise
+        """
         try:
             memory = psutil.virtual_memory()
             cpu_percent = psutil.cpu_percent(interval=1)
@@ -101,7 +114,12 @@ class ParallelPipelineOrchestrator:
             return True
     
     def _get_video_files(self) -> List[str]:
-        """Get list of video files to process"""
+        """
+        Get list of video files to process from input directory.
+        
+        Returns:
+            List[str]: List of video filenames
+        """
         video_files = []
         video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.wmv'}
         
@@ -116,7 +134,15 @@ class ParallelPipelineOrchestrator:
         return sorted(video_files)
     
     def _create_output_structure(self, video_name: str) -> Path:
-        """Create output directory structure for a video"""
+        """
+        Create output directory structure for a video.
+        
+        Args:
+            video_name: Name of the video file
+            
+        Returns:
+            Path: Path to the video's output directory
+        """
         video_dir_name = Path(video_name).stem
         video_output_dir = self.output_dir / video_dir_name
         
@@ -136,7 +162,17 @@ class ParallelPipelineOrchestrator:
     
     def _run_service_container(self, service_name: str, video_name: str, 
                               video_output_dir: Path) -> Tuple[bool, str]:
-        """Run a single service container for a video"""
+        """
+        Run a single service container for a video.
+        
+        Args:
+            service_name: Name of the service to run
+            video_name: Name of the video file
+            video_output_dir: Output directory for the video
+            
+        Returns:
+            Tuple[bool, str]: Success status and message
+        """
         if self.shutdown_event.is_set():
             return False, "Shutdown requested"
         
@@ -187,7 +223,15 @@ class ParallelPipelineOrchestrator:
             return False, f"Unexpected error: {str(e)}"
     
     def _process_video_parallel(self, video_name: str) -> Tuple[str, bool, float, List[str], List[str]]:
-        """Process a single video with parallel services"""
+        """
+        Process a single video with parallel services.
+        
+        Args:
+            video_name: Name of the video file
+            
+        Returns:
+            Tuple: Video name, success status, elapsed time, successful services, failed services
+        """
         start_time = time.time()
         
         print(f"[{video_name}] Starting parallel processing")
@@ -229,7 +273,10 @@ class ParallelPipelineOrchestrator:
         return video_name, success, elapsed_time, successful_services, failed_services
     
     def run_parallel_pipeline(self):
-        """Main execution method with parallel video and service processing"""
+        """
+        Main execution method with parallel video and service processing.
+        Processes multiple videos concurrently with parallel service execution.
+        """
         print("="*70)
         print("Parallel Pipeline Orchestrator")
         print("="*70)
@@ -288,7 +335,14 @@ class ParallelPipelineOrchestrator:
             self._print_final_summary(results, total_elapsed, len(video_files))
     
     def _print_final_summary(self, results: List[Tuple], total_time: float, total_videos: int):
-        """Print comprehensive final summary"""
+        """
+        Print comprehensive final summary of processing results.
+        
+        Args:
+            results: List of processing results
+            total_time: Total processing time
+            total_videos: Total number of videos processed
+        """
         print("\n" + "="*70)
         print("FINAL SUMMARY - PARALLEL PROCESSING COMPLETE")
         print("="*70)
@@ -328,7 +382,9 @@ class ParallelPipelineOrchestrator:
 
 
 def main():
-    """Main entry point"""
+    """
+    Main entry point for the parallel pipeline orchestrator.
+    """
     try:
         orchestrator = ParallelPipelineOrchestrator()
         orchestrator.run_parallel_pipeline()

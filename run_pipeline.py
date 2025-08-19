@@ -151,7 +151,6 @@ class VideoProcessingPipeline:
         This prevents network creation conflicts during parallel execution.
         """
         try:
-            # Check if network exists
             result = subprocess.run(
                 ["docker", "network", "ls", "--filter", "name=ruben_diploma_default", "--format", "{{.Name}}"],
                 capture_output=True,
@@ -168,14 +167,13 @@ class VideoProcessingPipeline:
                     cwd=self.base_dir
                 )
                 if create_result.returncode == 0:
-                    thread_safe_print("✓ Docker network created successfully")
+                    thread_safe_print("Docker network created successfully")
                 else:
                     thread_safe_print(f"Warning: Could not create network: {create_result.stderr}")
-                    # Try to use existing default network instead
                     thread_safe_print("Trying to use existing default network...")
                     return False
             else:
-                thread_safe_print("✓ Docker network already exists")
+                thread_safe_print("Docker network already exists")
                 return True
                 
         except Exception as e:
@@ -186,7 +184,6 @@ class VideoProcessingPipeline:
 
     def get_service_image_name(self, service_name):
         """Get the Docker image name for a service."""
-        # Use the existing naming convention from docker-compose
         return f"ruben_diploma-{service_name}"
 
     def run_service(self, service_name, video_filename, video_output_dir):
@@ -196,7 +193,6 @@ class VideoProcessingPipeline:
         """
         thread_safe_print(f"Starting {service_name}...", video_filename)
         
-        # Build the service image if it doesn't exist
         self.build_service_image(service_name, video_filename)
         
         env_vars = {
@@ -206,7 +202,6 @@ class VideoProcessingPipeline:
             "MAX_WORKERS": "2"
         }
         
-        # Get absolute paths for volume mounting
         input_path = str(self.input_dir.absolute())
         output_path = str(self.output_dir.absolute())
         
@@ -219,11 +214,9 @@ class VideoProcessingPipeline:
             "-v", f"{output_path}:/app/output"
         ]
         
-        # Only add custom network if it exists
         if self.custom_network_available:
             cmd.extend(["--network", "ruben_diploma_default"])
         
-        # Add environment variables
         for key, value in env_vars.items():
             cmd.extend(["-e", f"{key}={value}"])
         
@@ -232,7 +225,6 @@ class VideoProcessingPipeline:
         try:
             thread_safe_print(f"Running command: {' '.join(cmd[:6])}...", video_filename)
             
-            # Use Popen for long-running processes without timeout
             process = subprocess.Popen(
                 cmd,
                 cwd=self.base_dir,
@@ -241,7 +233,6 @@ class VideoProcessingPipeline:
                 text=True
             )
             
-            # Wait for completion without timeout
             stdout, stderr = process.communicate()
             
             if process.returncode != 0:
@@ -253,7 +244,6 @@ class VideoProcessingPipeline:
                 if stdout:
                     thread_safe_print(f"STDOUT: {stdout[:500]}", video_filename)
                 
-                # Check if output files were created
                 self.check_service_outputs(service_name, video_output_dir, video_filename)
                 return False
             
@@ -268,13 +258,11 @@ class VideoProcessingPipeline:
         """Build Docker image for a service if it doesn't exist."""
         image_name = self.get_service_image_name(service_name)
         
-        # Check if image exists
         check_cmd = ["docker", "images", "-q", image_name]
         result = subprocess.run(check_cmd, capture_output=True, text=True, cwd=self.base_dir)
         
         if not result.stdout.strip():
             thread_safe_print(f"Building {service_name} image...", video_filename)
-            # Use docker-compose to build the image to ensure consistency
             build_cmd = ["docker-compose", "build", service_name]
             
             build_result = subprocess.run(
@@ -287,7 +275,7 @@ class VideoProcessingPipeline:
             if build_result.returncode != 0:
                 thread_safe_print(f"Failed to build {service_name}: {build_result.stderr[:200]}", video_filename)
             else:
-                thread_safe_print(f"✓ {service_name} image built successfully", video_filename)
+                thread_safe_print(f"{service_name} image built successfully", video_filename)
     
     def check_service_outputs(self, service_name, video_output_dir, video_filename):
         """Check what output files were created by a service to help diagnose failures."""
@@ -314,32 +302,29 @@ class VideoProcessingPipeline:
             file_path = video_output_dir / expected_file
             if file_path.exists():
                 file_size = file_path.stat().st_size
-                thread_safe_print(f"✓ Found: {expected_file} ({file_size} bytes)", video_filename)
+                thread_safe_print(f"Found: {expected_file} ({file_size} bytes)", video_filename)
             else:
-                thread_safe_print(f"✗ Missing: {expected_file}", video_filename)
+                thread_safe_print(f"Missing: {expected_file}", video_filename)
     
     def check_service_dependencies(self, service_name, video_output_dir, video_filename):
         """Check if required input files exist before running a service."""
         thread_safe_print(f"Checking dependencies for {service_name}...", video_filename)
         
         if service_name == "audio_processing":
-            # Audio processing only needs the input video file
             return True
         elif service_name == "face_recognition":
-            # Face recognition needs speakers_with_embeddings.json from audio processing
             required_file = video_output_dir / "speaker_diarization/speakers_with_embeddings.json"
             if not required_file.exists():
-                thread_safe_print(f"✗ Missing required input: speakers_with_embeddings.json", video_filename)
+                thread_safe_print(f"Missing required input: speakers_with_embeddings.json", video_filename)
                 return False
-            thread_safe_print(f"✓ Found required input: speakers_with_embeddings.json", video_filename)
+            thread_safe_print(f"Found required input: speakers_with_embeddings.json", video_filename)
             return True
         elif service_name == "polarization_analysis":
-            # Polarization analysis needs speakers_with_embeddings.json from audio processing
             required_file = video_output_dir / "speaker_diarization/speakers_with_embeddings.json"
             if not required_file.exists():
-                thread_safe_print(f"✗ Missing required input: speakers_with_embeddings.json", video_filename)
+                thread_safe_print(f"Missing required input: speakers_with_embeddings.json", video_filename)
                 return False
-            thread_safe_print(f"✓ Found required input: speakers_with_embeddings.json", video_filename)
+            thread_safe_print(f"Found required input: speakers_with_embeddings.json", video_filename)
             return True
         else:
             return True
@@ -365,13 +350,11 @@ class VideoProcessingPipeline:
         successful_services = []
         failed_services = []
         
-        # Process services sequentially for each video (audio -> face -> polarization)
         for i, service in enumerate(self.services):
             thread_safe_print(f"Starting {service} (step {i+1}/{len(self.services)})...", video_filename)
             
-            # Check dependencies before running the service
             if not self.check_service_dependencies(service, video_output_dir, video_filename):
-                thread_safe_print(f"✗ {service} dependencies not met. Skipping.", video_filename)
+                thread_safe_print(f"{service} dependencies not met. Skipping.", video_filename)
                 failed_services.append(service)
                 continue
             
@@ -379,15 +362,12 @@ class VideoProcessingPipeline:
             
             if success:
                 successful_services.append(service)
-                thread_safe_print(f"✓ {service} completed successfully", video_filename)
-                
-                # Wait a moment for file system to sync
+                thread_safe_print(f"{service} completed successfully", video_filename)
                 time.sleep(1)
             else:
                 failed_services.append(service)
-                thread_safe_print(f"✗ {service} failed", video_filename)
+                thread_safe_print(f"{service} failed", video_filename)
                 
-                # If a critical service fails, stop processing this video
                 if service == "audio_processing":
                     thread_safe_print("Critical failure: audio_processing failed. Stopping video processing.", video_filename)
                     break
@@ -419,7 +399,6 @@ class VideoProcessingPipeline:
             print("No video files found in input/videos directory!")
             return
         
-        # DEBUG MODE: Process only the first video
         video_files = video_files[:1]
         
         print(f"\nFound {len(video_files)} video(s) to process (DEBUG MODE - ONE VIDEO ONLY):")
@@ -440,13 +419,13 @@ class VideoProcessingPipeline:
                 result = self.process_single_video(video_filename)
                 results.append(result)
                 
-                if result[1]:  # If successful
-                    print(f"✅ Video {i} completed successfully")
+                if result[1]:
+                    print(f"Video {i} completed successfully")
                 else:
-                    print(f"❌ Video {i} failed")
+                    print(f"Video {i} failed")
                     
             except Exception as e:
-                print(f"💥 Video {i} crashed: {str(e)}")
+                print(f"Video {i} crashed: {str(e)}")
                 results.append((video_filename, False, 0, [], self.services))
         
         total_elapsed = time.time() - total_start_time

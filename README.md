@@ -215,8 +215,16 @@ Ruben_Diploma/
    cd Ruben_Diploma
    ```
 
-2. **Place your video files**
-   - Add debate videos to `input/videos/` directory
+2. **Download debate videos (optional)**
+   ```bash
+   # Install yt-dlp for video downloading
+   pip install yt-dlp tqdm
+   
+   # Download all 48 political debate videos automatically
+   python download_videos.py
+   ```
+   
+   *Or manually place your video files in `input/videos/` directory*
 
 3. **Run the pipeline**
    ```bash
